@@ -32,33 +32,27 @@ float Lambda[Demands] = ...;
 {string} NbsI[i in Nodes] = {j | <j,i> in Arcs};
  //Set of ingoing neighbors
  
-/* ZMIENNE */
-
-dvar float+ x[Arcs][Demands];
+/* ZMIENNE & FUNKCJA CELU */
 dvar float+ u[Arcs][Demands];
-//dvar boolean x[Arcs][Demands];
-//dvar boolean u[Arcs][Demands];
 dvar float+ alfa[Arcs];
-//dvar float+ alfaTotal;
+dvar float+ alfaMax;
 
-/* FUNKCJA CELU */
+/* MULTIPATH */
+/*dvar float+ x[Arcs][Demands];
+minimize alfaMax;*/
 
-/* Jak zmienilem funkcje celu na taka jak nizej,
-	i usunalem w ogole alfaTotal ktora chce zelek,
-	to zaczelo poprawnie liczyc wszystko dla przypadku single-path.
-	Niestety, liczy tak samo (to znaczy oblicza przypadek single-path)
-	bez wzgledu na to, czy zmienne x,u sa typu boolean czy float+ - Tomek */
-	
-//minimize alfaTotal;
+/* SINGLEPATH */
+dvar boolean x[Arcs][Demands];
 minimize sum(a in Arcs) alfa[a];
 
 /* OGRANICZENIA */
 subject to{
-  /*forall(e in Arcs)
+  alfaMax <= 1;
+  forall(e in Arcs)
     minimalizacja_wektora_alf:
     {
-    	alfa[e] <= alfaTotal;
-    }*/
+    	alfaMax >= alfa[e];
+    }
   forall(e in Arcs){
     forall(k in Demands)
     x_u_mniejsze:
@@ -71,7 +65,13 @@ subject to{
   forall(e in Arcs)
     wzor_12:
     {
-		sum(k in Demands) Lambda[k]*u[e][k] <= alfa[e]*Fi[e];
+		sum(k in Demands) Lambda[k]*u[e][k] <= alfaMax*Fi[e];
+    }  
+  forall(e in Arcs)
+    wzor_17:
+    {
+		sum(k in Demands) Lambda[k]*u[e][k] == alfa[e]*Fi[e];
+		alfa[e] <= 1;
     }  
   forall(n in Nodes,k in Demands)
      wzor_3:
